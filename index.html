@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AquaRacers — RC Offshore Racing</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell" data-mode="title">
+    <!-- Full-Viewport Live Ocean Canvas -->
+    <canvas id="game-canvas" aria-label="AquaRacers Ocean Race Course"></canvas>
+
+    <!-- Top Racing HUD Bar -->
+    <header id="hud-top" class="hud-top" aria-label="Race Telemetry">
+      <div class="hud-group hud-left">
+        <div id="hud-position" class="hud-card hud-position rank-1" aria-label="Current Position">
+          <span class="hud-label">POS</span>
+          <div class="pos-value">
+            <span id="hud-pos-num" class="tabular">1st</span>
+            <span id="hud-pos-total" class="pos-total tabular">/ 5</span>
+          </div>
+        </div>
+
+        <div class="hud-card hud-lap" aria-label="Lap Counter">
+          <span class="hud-label">LAP</span>
+          <span id="hud-lap-value" class="hud-value tabular">1 / 3</span>
+        </div>
+
+        <div class="hud-card hud-timer" aria-label="Race Timer">
+          <span class="hud-label">TIME</span>
+          <div class="timer-row">
+            <span id="hud-timer-value" class="hud-value tabular">00:00.0</span>
+            <span id="hud-penalty-badge" class="penalty-badge tabular hidden" title="Active Time Penalties">+0.0s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-group hud-center">
+        <div class="hud-pill course-pill" title="Current Course">
+          <span class="pill-dot" aria-hidden="true"></span>
+          <span id="hud-course-name" class="course-pill-name">Generating Bay...</span>
+          <span class="pill-sep" aria-hidden="true">•</span>
+          <span id="hud-course-dir" class="course-pill-dir">CW</span>
+        </div>
+      </div>
+
+      <div class="hud-group hud-right">
+        <div id="hud-career-pill" class="hud-pill career-pill" title="Overall Career Record">
+          <span class="career-pill-wl tabular">
+            <span class="wl-w">W <strong id="hud-career-wins">0</strong></span>
+            <span class="wl-dash">–</span>
+            <span class="wl-l">L <strong id="hud-career-losses">0</strong></span>
+          </span>
+          <span id="hud-career-pct" class="career-pill-pct tabular">0%</span>
+        </div>
+
+        <div class="hud-actions" role="toolbar" aria-label="Race Controls">
+          <button id="btn-mute" class="icon-btn" type="button" title="Mute / Unmute Sound (M)" aria-label="Toggle Sound" aria-pressed="false">
+            <svg class="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg class="icon-sound-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+
+          <button id="btn-rules-hud" class="icon-btn" type="button" title="Water Race Rules" aria-label="Water Race Rules">
+            <span class="icon-q" aria-hidden="true">?</span>
+          </button>
+
+          <button id="btn-restart-hud" class="icon-btn" type="button" title="Restart Course (R)" aria-label="Restart Course">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+
+          <button id="btn-new-course-hud" class="icon-btn icon-btn-accent" type="button" title="New Course (N)" aria-label="New Course">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Persistent Missed Buoy Warning Banner -->
+    <div id="missed-buoy-banner" class="missed-buoy-banner hidden" role="alert" aria-live="assertive">
+      <span class="warning-icon" aria-hidden="true">!</span>
+      <span id="missed-buoy-text">MISSED BUOY — LOOP AROUND OUTSIDE!</span>
+    </div>
+
+    <!-- Center Countdown Overlay -->
+    <div id="countdown-overlay" class="countdown-overlay hidden" aria-live="assertive" aria-atomic="true">
+      <div id="countdown-value" class="countdown-value">3</div>
+      <div id="countdown-sub" class="countdown-sub">HOLD BEHIND START LINE</div>
+    </div>
+
+    <!-- Race Event Callout Toasts -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+    <!-- Bottom-Right Tactile RC Transmitter Widget -->
+    <aside id="rc-transmitter" class="rc-transmitter" aria-label="RC Boat Transmitter Controls">
+      <div class="rc-antenna" aria-hidden="true"></div>
+      <div class="rc-body">
+        <div class="rc-header">
+          <span class="rc-brand">AQUA-TX 2.4G</span>
+          <div class="rc-status">
+            <span id="rc-signal-led" class="rc-led" aria-hidden="true"></span>
+            <span id="rc-buoy-readout" class="rc-buoy-readout tabular">BUOY 1/6</span>
+          </div>
+        </div>
+
+        <div class="rc-lcd">
+          <div class="rc-speed-block">
+            <span id="rc-speed-value" class="rc-speed-num tabular">0</span>
+            <span class="rc-speed-unit">KT</span>
+          </div>
+          <div class="rc-lcd-meta">
+            <span id="rc-throttle-pct" class="rc-meta-item tabular">THR 0%</span>
+            <span id="rc-wake-tag" class="rc-wake-tag">CALM</span>
+          </div>
+        </div>
+
+        <div class="rc-controls-row">
+          <!-- Interactive Throttle Trigger / Slider -->
+          <div id="rc-throttle-pad" class="rc-throttle-pad" role="slider" aria-label="Throttle Control" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+            <span class="rc-pad-label">FWD</span>
+            <div class="rc-throttle-track">
+              <div class="rc-throttle-mid"></div>
+              <div id="rc-throttle-fill" class="rc-throttle-fill"></div>
+              <div id="rc-throttle-thumb" class="rc-throttle-thumb"></div>
+            </div>
+            <span class="rc-pad-label">REV</span>
+          </div>
+
+          <!-- Interactive Steering Wheel -->
+          <div id="rc-wheel-pad" class="rc-wheel-pad" role="slider" aria-label="Steering Wheel Control" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+            <div class="rc-wheel-arc" aria-hidden="true"></div>
+            <div id="rc-wheel-rotor" class="rc-wheel-rotor">
+              <svg viewBox="0 0 80 80" class="rc-wheel-svg" aria-hidden="true">
+                <circle cx="40" cy="40" r="33" class="wheel-tire"></circle>
+                <circle cx="40" cy="40" r="24" class="wheel-rim"></circle>
+                <rect x="37" y="4" width="6" height="10" rx="2" class="wheel-marker"></rect>
+                <line x1="40" y1="16" x2="40" y2="34" class="wheel-spoke"></line>
+                <line x1="17" y1="45" x2="34" y2="41" class="wheel-spoke"></line>
+                <line x1="63" y1="45" x2="46" y2="41" class="wheel-spoke"></line>
+                <circle cx="40" cy="40" r="9" class="wheel-hub"></circle>
+                <circle cx="40" cy="40" r="3.5" class="wheel-cap"></circle>
+              </svg>
+            </div>
+            <div class="rc-wheel-hints" aria-hidden="true">
+              <span>◀</span>
+              <span>STEER</span>
+              <span>▶</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Title / Pre-Race Overlay -->
+    <section id="title-overlay" class="overlay-backdrop" aria-label="AquaRacers Start Screen">
+      <div class="overlay-card title-card">
+        <div class="title-hero">
+          <div class="brand-badge">
+            <span class="badge-wave" aria-hidden="true">≈</span>
+            <span>OFFSHORE RC CHAMPIONSHIP</span>
+          </div>
+          <h1 class="game-title">AQUA<span>RACERS</span></h1>
+          <p class="game-subtitle">RC Offshore Racing — Master the Buoys, Ride the Wake, Win the Bay</p>
+        </div>
+
+        <div class="title-grid">
+          <!-- Generated Course Preview Card -->
+          <div class="panel-box course-preview-box">
+            <div class="panel-header">
+              <span class="panel-kicker">GENERATED CIRCUIT</span>
+              <button id="btn-shuffle-course" class="btn-chip" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="16 3 21 3 21 8"></polyline>
+                  <line x1="4" y1="20" x2="21" y2="3"></line>
+                  <polyline points="21 16 21 21 16 21"></polyline>
+                  <line x1="15" y1="15" x2="21" y2="21"></line>
+                  <line x1="4" y1="4" x2="9" y2="9"></line>
+                </svg>
+                <span>Shuffle Course</span>
+              </button>
+            </div>
+            <h2 id="preview-course-name" class="preview-course-name">Pelican Point Circuit</h2>
+            <div class="course-meta-grid">
+              <div class="meta-chip">
+                <span class="meta-label">ARCHETYPE</span>
+                <span id="preview-course-archetype" class="meta-value">Harbor Sweep</span>
+              </div>
+              <div class="meta-chip">
+                <span class="meta-label">DIRECTION</span>
+                <span id="preview-course-direction" class="meta-value">Clockwise (CW)</span>
+              </div>
+              <div class="meta-chip">
+                <span class="meta-label">TURN BUOYS</span>
+                <span id="preview-course-buoys" class="meta-value tabular">6 Buoys</span>
+              </div>
+              <div class="meta-chip">
+                <span class="meta-label">RACE FORMAT</span>
+                <span id="preview-course-laps" class="meta-value tabular">3 Laps • 5 Boats</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overall Career Win / Loss Record Card -->
+          <div class="panel-box career-summary-box">
+            <div class="panel-header">
+              <span class="panel-kicker">CAREER RECORD</span>
+              <span id="title-career-races" class="career-total-tag tabular">0 Races</span>
+            </div>
+            <div class="career-stats-grid">
+              <div class="stat-tile stat-win">
+                <span id="title-stat-wins" class="stat-num tabular">0</span>
+                <span class="stat-label">WINS</span>
+              </div>
+              <div class="stat-tile stat-loss">
+                <span id="title-stat-losses" class="stat-num tabular">0</span>
+                <span class="stat-label">LOSSES</span>
+              </div>
+              <div class="stat-tile stat-pct">
+                <span id="title-stat-winpct" class="stat-num tabular">0%</span>
+                <span class="stat-label">WIN %</span>
+              </div>
+              <div class="stat-tile">
+                <span id="title-stat-podiums" class="stat-num tabular">0</span>
+                <span class="stat-label">PODIUMS</span>
+              </div>
+              <div class="stat-tile">
+                <span id="title-stat-streak" class="stat-num tabular">0</span>
+                <span class="stat-label">STREAK</span>
+              </div>
+              <div class="stat-tile">
+                <span id="title-stat-bestlap" class="stat-num tabular">--:--.-</span>
+                <span class="stat-label">BEST LAP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Controls Legend -->
+        <div class="controls-strip" aria-label="Keyboard Controls">
+          <div class="control-item"><kbd>W</kbd><kbd>↑</kbd><span>Accelerate</span></div>
+          <div class="control-item"><kbd>S</kbd><kbd>↓</kbd><span>Brake / Reverse</span></div>
+          <div class="control-item"><kbd>A</kbd><kbd>D</kbd><span class="or-sep">/</span><kbd>←</kbd><kbd>→</kbd><span>Steer</span></div>
+          <div class="control-item"><kbd>R</kbd><span>Restart</span></div>
+          <div class="control-item"><kbd>N</kbd><span>New Course</span></div>
+          <div class="control-item"><kbd>M</kbd><span>Mute</span></div>
+        </div>
+
+        <!-- Action CTA Row -->
+        <div class="title-actions">
+          <button id="btn-rules-title" class="btn btn-secondary" type="button">
+            <span>Water Race Rules</span>
+          </button>
+          <button id="btn-start-race" class="btn btn-primary btn-start" type="button">
+            <span>START RACE</span>
+            <span class="btn-kbd-hint">SPACE</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Post-Race Results Overlay -->
+    <section id="results-overlay" class="overlay-backdrop hidden" aria-label="Race Results">
+      <div class="overlay-card results-card">
+        <div class="results-header">
+          <div id="results-badge" class="results-rank-badge rank-1">1ST</div>
+          <div class="results-headings">
+            <h2 id="results-headline" class="results-headline">VICTORY! 1ST PLACE</h2>
+            <p id="results-subtitle" class="results-subtitle">Pelican Point Circuit • CW • 3 Laps</p>
+          </div>
+          <div id="results-outcome-pill" class="outcome-pill outcome-win">+1 WIN</div>
+        </div>
+
+        <!-- 5-Boat Classification Table -->
+        <div class="results-table-wrap">
+          <table class="results-table" aria-label="Final Race Standings">
+            <thead>
+              <tr>
+                <th scope="col">POS</th>
+                <th scope="col">BOAT</th>
+                <th scope="col" class="num-col">RAW TIME</th>
+                <th scope="col" class="num-col">PENALTY</th>
+                <th scope="col" class="num-col">ADJUSTED</th>
+                <th scope="col" class="num-col">BEST LAP</th>
+              </tr>
+            </thead>
+            <tbody id="results-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Updated Career Record Card -->
+        <div class="panel-box results-career-box">
+          <div class="panel-header">
+            <span class="panel-kicker">UPDATED CAREER RECORD</span>
+            <div class="reset-career-wrap">
+              <button id="btn-reset-career" class="btn-link-danger" type="button">Reset Record</button>
+              <div id="reset-confirm-group" class="reset-confirm-group hidden">
+                <span class="reset-confirm-text">Clear all stats?</span>
+                <button id="btn-reset-confirm" class="btn-mini btn-mini-danger" type="button">Yes, Reset</button>
+                <button id="btn-reset-cancel" class="btn-mini" type="button">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="career-stats-grid results-career-grid">
+            <div class="stat-tile stat-win">
+              <span id="res-stat-wins" class="stat-num tabular">0</span>
+              <span class="stat-label">WINS</span>
+            </div>
+            <div class="stat-tile stat-loss">
+              <span id="res-stat-losses" class="stat-num tabular">0</span>
+              <span class="stat-label">LOSSES</span>
+            </div>
+            <div class="stat-tile stat-pct">
+              <span id="res-stat-winpct" class="stat-num tabular">0%</span>
+              <span class="stat-label">WIN %</span>
+            </div>
+            <div class="stat-tile">
+              <span id="res-stat-podiums" class="stat-num tabular">0</span>
+              <span class="stat-label">PODIUMS</span>
+            </div>
+            <div class="stat-tile">
+              <span id="res-stat-streak" class="stat-num tabular">0</span>
+              <span class="stat-label">STREAK</span>
+            </div>
+            <div class="stat-tile">
+              <span id="res-stat-bestlap" class="stat-num tabular">--:--.-</span>
+              <span class="stat-label">BEST LAP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Post-Race Action Buttons -->
+        <div class="results-actions">
+          <button id="btn-back-title" class="btn btn-ghost" type="button">Title Menu</button>
+          <button id="btn-replay-course" class="btn btn-secondary" type="button">REPLAY THIS COURSE</button>
+          <button id="btn-next-race" class="btn btn-primary" type="button">NEXT RACE (NEW COURSE)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Water Race Rules Modal -->
+    <div id="rules-modal" class="overlay-backdrop modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="rules-modal-title">
+      <div class="overlay-card rules-card">
+        <div class="modal-header">
+          <div>
+            <span class="panel-kicker">OFFICIAL HARBOR REGULATIONS</span>
+            <h2 id="rules-modal-title" class="modal-title">Water Race Rules</h2>
+          </div>
+          <button id="btn-close-rules" class="icon-btn" type="button" aria-label="Close Rules">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="rules-grid">
+          <div class="rule-item">
+            <div class="rule-badge badge-amber">+2.0s</div>
+            <div class="rule-copy">
+              <h3>Countdown &amp; Jump Start</h3>
+              <p>Hold your hull behind the floating checkered start line during the 3-2-1 horn countdown. Crossing early before <strong>GO!</strong> adds a <strong>+2.0s</strong> jump-start penalty.</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-badge badge-aqua">OUTSIDE</div>
+            <div class="rule-copy">
+              <h3>Buoy Rounding</h3>
+              <p>Round every numbered apex turn buoy in sequence on its <strong>outside</strong> (between the apex buoy and the outer gate spar) following the glowing directional arrow.</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-badge badge-red">+3.0s</div>
+            <div class="rule-copy">
+              <h3>Missed Buoy &amp; Course Cut</h3>
+              <p>Pass inside a turn buoy and you'll get a warning to loop back and round it cleanly. Skipping ahead to the next buoy incurs a <strong>+3.0s</strong> course-cut penalty.</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-badge badge-amber">+1.5s</div>
+            <div class="rule-copy">
+              <h3>Buoy Collision ("Buoy Whack")</h3>
+              <p>Clipping a floating apex or gate buoy knocks it aside and adds a <strong>+1.5s</strong> time penalty. Give tight turns a little breathing room!</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-badge badge-teal">WAKE</div>
+            <div class="rule-copy">
+              <h3>Wake Turbulence</h3>
+              <p>Crossing another boat's foaming V-wake creates choppy hull bounce and minor drag. Carve clean water to carry maximum planing speed.</p>
+            </div>
+          </div>
+
+          <div class="rule-item">
+            <div class="rule-badge badge-gold">3 LAPS</div>
+            <div class="rule-copy">
+              <h3>Adjusted Time Scoring</h3>
+              <p>Complete 3 full laps. Final standings are ranked by <strong>Finish Time + Penalties</strong>. Finish 1st overall to add a <strong>Win</strong> to your career record!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-rules-ok" class="btn btn-primary" type="button">Got It — Back to the Bay</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

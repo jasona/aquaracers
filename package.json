@@ -1,0 +1,11 @@
+{
+  "name": "aquaracers",
+  "version": "1.0.0",
+  "description": "AquaRacers — 2D top-down RC offshore boat racing game",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/game.test.js",
+    "serve": "python3 -m http.server 4173"
+  }
+}
