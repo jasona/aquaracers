@@ -112,8 +112,13 @@
     <aside id="rc-transmitter" class="rc-transmitter" aria-label="RC Boat Transmitter Controls">
       <div class="rc-antenna" aria-hidden="true"></div>
       <div class="rc-body">
+        <span class="rc-screw rc-screw-tl" aria-hidden="true"></span>
+        <span class="rc-screw rc-screw-tr" aria-hidden="true"></span>
+        <span class="rc-screw rc-screw-bl" aria-hidden="true"></span>
+        <span class="rc-screw rc-screw-br" aria-hidden="true"></span>
+
         <div class="rc-header">
-          <span class="rc-brand">AQUA-TX 2.4G</span>
+          <span class="rc-brand">AQUA-TX <span class="rc-brand-sub">2.4GHz</span></span>
           <div class="rc-status">
             <span id="rc-signal-led" class="rc-led" aria-hidden="true"></span>
             <span id="rc-buoy-readout" class="rc-buoy-readout tabular">BUOY 1/6</span>
@@ -127,7 +132,7 @@
           </div>
           <div class="rc-lcd-meta">
             <span id="rc-throttle-pct" class="rc-meta-item tabular">THR 0%</span>
-            <span id="rc-wake-tag" class="rc-wake-tag">CALM</span>
+            <span id="rc-wake-tag" class="rc-wake-tag">CLEAN H2O</span>
           </div>
         </div>
 
@@ -135,10 +140,13 @@
           <!-- Interactive Throttle Trigger / Slider -->
           <div id="rc-throttle-pad" class="rc-throttle-pad" role="slider" aria-label="Throttle Control" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" tabindex="0">
             <span class="rc-pad-label">FWD</span>
-            <div class="rc-throttle-track">
-              <div class="rc-throttle-mid"></div>
-              <div id="rc-throttle-fill" class="rc-throttle-fill"></div>
-              <div id="rc-throttle-thumb" class="rc-throttle-thumb"></div>
+            <div class="rc-throttle-housing">
+              <div class="rc-throttle-ticks" aria-hidden="true"></div>
+              <div class="rc-throttle-track">
+                <div class="rc-throttle-mid"></div>
+                <div id="rc-throttle-fill" class="rc-throttle-fill"></div>
+                <div id="rc-throttle-thumb" class="rc-throttle-thumb"></div>
+              </div>
             </div>
             <span class="rc-pad-label">REV</span>
           </div>
@@ -147,21 +155,51 @@
           <div id="rc-wheel-pad" class="rc-wheel-pad" role="slider" aria-label="Steering Wheel Control" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0" tabindex="0">
             <div class="rc-wheel-arc" aria-hidden="true"></div>
             <div id="rc-wheel-rotor" class="rc-wheel-rotor">
-              <svg viewBox="0 0 80 80" class="rc-wheel-svg" aria-hidden="true">
-                <circle cx="40" cy="40" r="33" class="wheel-tire"></circle>
-                <circle cx="40" cy="40" r="24" class="wheel-rim"></circle>
-                <rect x="37" y="4" width="6" height="10" rx="2" class="wheel-marker"></rect>
-                <line x1="40" y1="16" x2="40" y2="34" class="wheel-spoke"></line>
-                <line x1="17" y1="45" x2="34" y2="41" class="wheel-spoke"></line>
-                <line x1="63" y1="45" x2="46" y2="41" class="wheel-spoke"></line>
-                <circle cx="40" cy="40" r="9" class="wheel-hub"></circle>
-                <circle cx="40" cy="40" r="3.5" class="wheel-cap"></circle>
+              <svg viewBox="0 0 96 96" class="rc-wheel-svg" aria-hidden="true">
+                <defs>
+                  <linearGradient id="rc-metal-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#c4d3e0" />
+                    <stop offset="48%" stop-color="#5d7285" />
+                    <stop offset="100%" stop-color="#2c3a47" />
+                  </linearGradient>
+                  <radialGradient id="rc-hub-grad" cx="38%" cy="35%" r="65%">
+                    <stop offset="0%" stop-color="#60768a" />
+                    <stop offset="55%" stop-color="#22303d" />
+                    <stop offset="100%" stop-color="#0d151d" />
+                  </radialGradient>
+                  <linearGradient id="rc-spoke-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#9cb0c2" />
+                    <stop offset="50%" stop-color="#516578" />
+                    <stop offset="100%" stop-color="#2c3945" />
+                  </linearGradient>
+                </defs>
+                <!-- Outer sculpted rubberized RC wheel foam grip -->
+                <circle cx="48" cy="48" r="39" class="wheel-tire-base"></circle>
+                <circle cx="48" cy="48" r="41.2" class="wheel-tire-knurl"></circle>
+                <circle cx="48" cy="48" r="35.5" class="wheel-tire-inner"></circle>
+                <!-- Brushed anodized aluminum inner rim -->
+                <circle cx="48" cy="48" r="31" class="wheel-rim"></circle>
+                <!-- Top-dead-center champagne alignment band -->
+                <rect x="45" y="4.5" width="6" height="9.5" rx="1.5" class="wheel-marker"></rect>
+                <!-- 3 machined motorsport spokes -->
+                <path d="M44 17 L52 17 L50.5 39 L45.5 39 Z" class="wheel-spoke"></path>
+                <path d="M19 56 L22.5 49 L41 46 L42.5 52 Z" class="wheel-spoke"></path>
+                <path d="M77 56 L73.5 49 L55 46 L53.5 52 Z" class="wheel-spoke"></path>
+                <!-- Spoke weight-reduction slots -->
+                <circle cx="48" cy="26.5" r="2" class="wheel-cutout"></circle>
+                <circle cx="29.5" cy="52" r="2" class="wheel-cutout"></circle>
+                <circle cx="66.5" cy="52" r="2" class="wheel-cutout"></circle>
+                <!-- Machined center hub & anodized hex locknut -->
+                <circle cx="48" cy="48" r="12" class="wheel-hub"></circle>
+                <circle cx="48" cy="48" r="9.5" class="wheel-hub-ring"></circle>
+                <polygon points="48,42.5 52.8,45.2 52.8,50.8 48,53.5 43.2,50.8 43.2,45.2" class="wheel-hex"></polygon>
+                <circle cx="48" cy="48" r="2.2" class="wheel-cap"></circle>
               </svg>
             </div>
             <div class="rc-wheel-hints" aria-hidden="true">
-              <span>◀</span>
+              <span>L</span>
               <span>STEER</span>
-              <span>▶</span>
+              <span>R</span>
             </div>
           </div>
         </div>
@@ -173,8 +211,9 @@
       <div class="overlay-card title-card">
         <div class="title-hero">
           <div class="brand-badge">
-            <span class="badge-wave" aria-hidden="true">≈</span>
-            <span>OFFSHORE RC CHAMPIONSHIP</span>
+            <span class="badge-rule" aria-hidden="true"></span>
+            <span>CLASS-1 OFFSHORE RC SERIES</span>
+            <span class="badge-rule" aria-hidden="true"></span>
           </div>
           <h1 class="game-title">AQUA<span>RACERS</span></h1>
           <p class="game-subtitle">RC Offshore Racing — Master the Buoys, Ride the Wake, Win the Bay</p>
